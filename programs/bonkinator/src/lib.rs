@@ -102,12 +102,12 @@ pub mod bonkinator {
             )
             .map_err(|_| BonkError::NotEnoughBonk)?;
 
-            anchor_spl::token::burn(
+            anchor_spl::token::transfer(
                 CpiContext::new(
                     ctx.accounts.token_program.to_account_info(),
-                    anchor_spl::token::Burn {
-                        mint: ctx.accounts.bonk_mint.to_account_info(),
+                    anchor_spl::token::Transfer {
                         from: ctx.accounts.buyer_bonk_acc.to_account_info(),
+                        to: ctx.accounts.treasury.to_account_info(),
                         authority: ctx.accounts.buyer.to_account_info(),
                     },
                 ),
@@ -118,16 +118,16 @@ pub mod bonkinator {
             tweet.owner = Some(ctx.accounts.buyer.key());
             tweet.price = Some(tweet.price.unwrap() + (tweet.price.unwrap() / 5))
         } else {
-            anchor_spl::token::burn(
+            anchor_spl::token::transfer(
                 CpiContext::new(
                     ctx.accounts.token_program.to_account_info(),
-                    anchor_spl::token::Burn {
-                        mint: ctx.accounts.bonk_mint.to_account_info(),
+                    anchor_spl::token::Transfer {
                         from: ctx.accounts.buyer_bonk_acc.to_account_info(),
+                        to: ctx.accounts.treasury.to_account_info(),
                         authority: ctx.accounts.buyer.to_account_info(),
                     },
                 ),
-                100000000000,
+               100000000000,
             )
             .map_err(|_| BonkError::NotEnoughBonk)?;
 
