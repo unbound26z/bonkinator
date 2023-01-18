@@ -6,7 +6,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use error::BonkError;
 pub mod address;
 pub mod error;
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("AM11xAodtV57L3Zuo2y23WERsyASJtXTzpYh2oarqsh5");
 
 #[account]
 pub struct Tweet {
@@ -23,9 +23,6 @@ pub struct BuyTweet<'info> {
 
     #[account(mut)]
     pub buyer_bonk_acc: Account<'info, TokenAccount>,
-
-    #[account(mut)]
-    pub seller_bonk_acc: Account<'info, TokenAccount>,
 
     #[account(
         init_if_needed,
@@ -44,6 +41,7 @@ pub struct BuyTweet<'info> {
     pub treasury: Account<'info, TokenAccount>,
 
     #[account(address=BONK_MINT.parse::<Pubkey>().unwrap() @ BonkError::WrongBonkTokenMint)]
+    #[account()]
     pub bonk_mint: Box<Account<'info, Mint>>,
 
     pub token_program: Program<'info, Token>,
@@ -67,6 +65,7 @@ pub struct CreateBonkTA<'info> {
     pub treasury: Account<'info, TokenAccount>,
 
     #[account(address=BONK_MINT.parse::<Pubkey>().unwrap() @ BonkError::WrongBonkTokenMint)]
+    #[account()]
     pub bonk_mint: Box<Account<'info, Mint>>,
 
     pub rent: Sysvar<'info, Rent>,
@@ -78,14 +77,26 @@ pub struct CreateBonkTA<'info> {
 pub mod bonkinator {
     use super::*;
 
-    pub fn buy_tweet(ctx: Context<BuyTweet>, tweet_id: String) -> Result<()> {
+    pub fn buy_tweet<'a,'b,'c,'info>(ctx: Context<'a,'b,'c,'info,BuyTweet<'info>>, tweet_id: String) -> Result<()> {
         let tweet = &mut ctx.accounts.tweet;
-
         tweet.tweet_id = tweet_id;
 
         if let Some(owner) = tweet.owner {
+            let remaining_accounts = &mut ctx.remaining_accounts.iter();
+            let seller_bonk_acc = Account::<TokenAccount>::try_from(remaining_accounts.next().expect("Seller bonk token account not provided")).expect("Not a token account");
+            
             require!(
-                ctx.accounts.seller_bonk_acc.owner.key() == owner,
+                seller_bonk_acc.mint.key()==ctx.accounts.bonk_mint.key(),
+                BonkError::NotABonkTokenAccount
+            );
+
+            require!(
+                ctx.accounts.buyer.key()!=owner, 
+                BonkError::AlreadyOwner
+            );
+
+            require!(
+               seller_bonk_acc.owner.key() == owner,
                 BonkError::WrongSellerTokenAccount
             );
 
@@ -94,7 +105,7 @@ pub mod bonkinator {
                     ctx.accounts.token_program.to_account_info(),
                     anchor_spl::token::Transfer {
                         from: ctx.accounts.buyer_bonk_acc.to_account_info(),
-                        to: ctx.accounts.seller_bonk_acc.to_account_info(),
+                        to: seller_bonk_acc.to_account_info(),
                         authority: ctx.accounts.buyer.to_account_info(),
                     },
                 ),
@@ -138,7 +149,7 @@ pub mod bonkinator {
         Ok(())
     }
 
-    pub fn create_bonk_token_account(ctx: Context<CreateBonkTA>) -> Result<()> {
+    pub fn create_bonk_token_account(_ctx: Context<CreateBonkTA>) -> Result<()> {
 
         
         Ok(())

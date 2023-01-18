@@ -10,4 +10,10 @@ pub enum BonkError {
 
     #[msg("Wrong bonk token mint")]
     WrongBonkTokenMint,
+
+    #[msg("You already own the tweet")]
+    AlreadyOwner,
+
+    #[msg("Remaining account isn't sellers token account")]
+    NotABonkTokenAccount,
 }
