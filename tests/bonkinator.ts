@@ -3,6 +3,7 @@ import { Program } from "@project-serum/anchor";
 import { Bonkinator } from "../target/types/bonkinator";
 import { PublicKey, Keypair, LAMPORTS_PER_SOL, SystemProgram, SYSVAR_RENT_PUBKEY, AccountMeta } from "@solana/web3.js";
 import { createMint, getAccount, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
+import assert from 'assert'
 
 describe("bonkinator", () => {
   // Configure the client to use the local cluster.
@@ -230,5 +231,30 @@ describe("bonkinator", () => {
       treasury
     )).amount);
 
+    try {
+      //Try to buy your own tweet
+      await program.methods.buyTweet("321")
+        .accounts({
+          buyer: firstBuyer.publicKey,
+          bonkMint: bonkMint,
+          buyerBonkAcc: firstBuyerTA.address,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+          treasury,
+          tweet: tweet2,
+        })
+        .remainingAccounts(remainingAccounts1)
+        .signers(
+          [firstBuyer]
+        )
+        .rpc();
+
+    } catch (error) {
+      assert.equal(
+        error.error.errorCode.code,
+        "AlreadyOwner",
+        error.error.errorMessage
+      );
+    }
   });
 });
