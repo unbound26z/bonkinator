@@ -6,7 +6,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use error::BonkError;
 pub mod address;
 pub mod error;
-declare_id!("AM11xAodtV57L3Zuo2y23WERsyASJtXTzpYh2oarqsh5");
+declare_id!("AjWzDnEEKPYvANmYvSsmu7LDfATQjHkfjzK1LMDUQSzR");
 
 #[account]
 pub struct Tweet {
