@@ -7,7 +7,7 @@ pub mod error;
 declare_id!("AjWzDnEEKPYvANmYvSsmu7LDfATQjHkfjzK1LMDUQSzR");
 
 const BONK_DECIMALS: u32 = 5;
-const INITIAL_PRICE: u64 = 1_000_000;
+const INITIAL_PRICE: u64 = 10_000;
 
 #[account]
 pub struct Tweet {
