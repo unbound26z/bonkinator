@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-bonkinator = "AM11xAodtV57L3Zuo2y23WERsyASJtXTzpYh2oarqsh5"
+bonkinator = "AjWzDnEEKPYvANmYvSsmu7LDfATQjHkfjzK1LMDUQSzR"
 
 [registry]
 url = "https://api.apr.dev"

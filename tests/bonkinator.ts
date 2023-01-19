@@ -4,6 +4,8 @@ import { Bonkinator } from "../target/types/bonkinator";
 import { PublicKey, Keypair, LAMPORTS_PER_SOL, SystemProgram, SYSVAR_RENT_PUBKEY, AccountMeta } from "@solana/web3.js";
 import { createMint, getAccount, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import assert from 'assert'
+import authoritySecretKey from '../keypairs/bonk_authority.json'
+import bonkMintSecretKey from '../keypairs/test_bonk_mint.json'
 
 describe("bonkinator", () => {
   // Configure the client to use the local cluster.
@@ -13,8 +15,17 @@ describe("bonkinator", () => {
 
   it("works as intended", async () => {
     //Test doesn't work with bonk mint restraints on
+    const authority = Keypair.fromSecretKey(Buffer.from(authoritySecretKey));
+    const bonkMintKeypair = Keypair.fromSecretKey(Buffer.from(bonkMintSecretKey));
     const firstBuyer = Keypair.generate();
     const secondBuyer = Keypair.generate();
+    const tx0 = await anchor
+      .getProvider()
+      .connection.requestAirdrop(
+        authority.publicKey,
+        LAMPORTS_PER_SOL
+      );
+    await anchor.getProvider().connection.confirmTransaction(tx0);
     const tx1 = await anchor
       .getProvider()
       .connection.requestAirdrop(
@@ -32,10 +43,11 @@ describe("bonkinator", () => {
 
     const bonkMint = await createMint(
       anchor.getProvider().connection,
-      secondBuyer,
-      secondBuyer.publicKey,
-      secondBuyer.publicKey,
-      5
+      authority,
+      authority.publicKey,
+      authority.publicKey,
+      5,
+      bonkMintKeypair
     );
 
     const firstBuyerTA = await getOrCreateAssociatedTokenAccount(
@@ -54,19 +66,19 @@ describe("bonkinator", () => {
 
     await mintTo(
       anchor.getProvider().connection,
-      secondBuyer,
+      authority,
       bonkMint,
       firstBuyerTA.address,
-      secondBuyer.publicKey,
+      authority.publicKey,
       10000000000000
     );
 
     await mintTo(
       anchor.getProvider().connection,
-      secondBuyer,
+      authority,
       bonkMint,
       secondBuyerTA.address,
-      secondBuyer.publicKey,
+      authority.publicKey,
       10000000000000
     );
 
@@ -256,5 +268,23 @@ describe("bonkinator", () => {
         error.error.errorMessage
       );
     }
+
+    await program.methods.burnBonk(new anchor.BN(100000000000))
+      .accounts({
+        payer: authority.publicKey,
+        bonkMint,
+        tokenProgram: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+        treasury
+      })
+      .signers(
+        [authority]
+      )
+      .rpc();
+
+    console.log("\nTreasury bonk balance after the burn: ", (await getAccount(
+      anchor.getProvider().connection,
+      treasury
+    )).amount);
+
   });
 });

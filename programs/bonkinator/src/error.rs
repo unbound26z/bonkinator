@@ -16,4 +16,10 @@ pub enum BonkError {
 
     #[msg("Remaining account isn't sellers token account")]
     NotABonkTokenAccount,
+
+    #[msg("You are not authorized for that action")]
+    NotAuthority,
+
+    #[msg("Bonk burn error")]
+    BurnError,
 }
